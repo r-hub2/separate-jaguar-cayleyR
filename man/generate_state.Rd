@@ -4,7 +4,13 @@
 \alias{generate_state}
 \title{Generate Reachable Random State}
 \usage{
-generate_state(n, k = n, n_moves = 25L, moves = c("1", "2", "3"))
+generate_state(
+  n,
+  k = n,
+  n_moves = 25L,
+  moves = c("1", "2", "3"),
+  max_attempts = 100L
+)
 }
 \arguments{
 \item{n}{Integer, the size of the permutation}
@@ -14,6 +20,8 @@ generate_state(n, k = n, n_moves = 25L, moves = c("1", "2", "3"))
 \item{n_moves}{Integer, number of random operations to apply (default 25)}
 
 \item{moves}{Character vector, allowed operations (default c("1", "2", "3"))}
+
+\item{max_attempts}{Integer, maximum attempts to generate a non-identity state (default 100)}
 }
 \value{
 Integer vector representing a reachable permutation state

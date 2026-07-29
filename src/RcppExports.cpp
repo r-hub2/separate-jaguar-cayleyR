@@ -120,8 +120,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // apply_operations
-List apply_operations(IntegerVector state, CharacterVector operations, int k, Nullable<List> coords);
-RcppExport SEXP _cayleyR_apply_operations(SEXP stateSEXP, SEXP operationsSEXP, SEXP kSEXP, SEXP coordsSEXP) {
+List apply_operations(IntegerVector state, CharacterVector operations, int k, Nullable<List> coords, bool compute_coords);
+RcppExport SEXP _cayleyR_apply_operations(SEXP stateSEXP, SEXP operationsSEXP, SEXP kSEXP, SEXP coordsSEXP, SEXP compute_coordsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -129,21 +129,122 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< CharacterVector >::type operations(operationsSEXP);
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
     Rcpp::traits::input_parameter< Nullable<List> >::type coords(coordsSEXP);
-    rcpp_result_gen = Rcpp::wrap(apply_operations(state, operations, k, coords));
+    Rcpp::traits::input_parameter< bool >::type compute_coords(compute_coordsSEXP);
+    rcpp_result_gen = Rcpp::wrap(apply_operations(state, operations, k, coords, compute_coords));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cycle_shortcut_cpp
+List cycle_shortcut_cpp(IntegerVector start_state, IntegerVector path, int k, IntegerVector points, IntegerVector moves, int combo_length, int n_samples, int n_top, IntegerVector sort_by, int max_cycle_len, int n_threads, bool verbose);
+RcppExport SEXP _cayleyR_cycle_shortcut_cpp(SEXP start_stateSEXP, SEXP pathSEXP, SEXP kSEXP, SEXP pointsSEXP, SEXP movesSEXP, SEXP combo_lengthSEXP, SEXP n_samplesSEXP, SEXP n_topSEXP, SEXP sort_bySEXP, SEXP max_cycle_lenSEXP, SEXP n_threadsSEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type start_state(start_stateSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type path(pathSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type points(pointsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type moves(movesSEXP);
+    Rcpp::traits::input_parameter< int >::type combo_length(combo_lengthSEXP);
+    Rcpp::traits::input_parameter< int >::type n_samples(n_samplesSEXP);
+    Rcpp::traits::input_parameter< int >::type n_top(n_topSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type sort_by(sort_bySEXP);
+    Rcpp::traits::input_parameter< int >::type max_cycle_len(max_cycle_lenSEXP);
+    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(cycle_shortcut_cpp(start_state, path, k, points, moves, combo_length, n_samples, n_top, sort_by, max_cycle_len, n_threads, verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cayley_bfs_full_cpp
+DataFrame cayley_bfs_full_cpp(IntegerVector start_state, int k, CharacterVector moves);
+RcppExport SEXP _cayleyR_cayley_bfs_full_cpp(SEXP start_stateSEXP, SEXP kSEXP, SEXP movesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type start_state(start_stateSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type moves(movesSEXP);
+    rcpp_result_gen = Rcpp::wrap(cayley_bfs_full_cpp(start_state, k, moves));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cayley_graph_diameter_cpp
+List cayley_graph_diameter_cpp(IntegerVector start_state, int k, CharacterVector moves, int method, double max_pairs, bool verbose);
+RcppExport SEXP _cayleyR_cayley_graph_diameter_cpp(SEXP start_stateSEXP, SEXP kSEXP, SEXP movesSEXP, SEXP methodSEXP, SEXP max_pairsSEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type start_state(start_stateSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type moves(movesSEXP);
+    Rcpp::traits::input_parameter< int >::type method(methodSEXP);
+    Rcpp::traits::input_parameter< double >::type max_pairs(max_pairsSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(cayley_graph_diameter_cpp(start_state, k, moves, method, max_pairs, verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
+// human_table_probe_cpp
+List human_table_probe_cpp(int n, int k);
+RcppExport SEXP _cayleyR_human_table_probe_cpp(SEXP nSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(human_table_probe_cpp(n, k));
+    return rcpp_result_gen;
+END_RCPP
+}
+// run_length_cpp
+int run_length_cpp(IntegerVector state);
+RcppExport SEXP _cayleyR_run_length_cpp(SEXP stateSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type state(stateSEXP);
+    rcpp_result_gen = Rcpp::wrap(run_length_cpp(state));
+    return rcpp_result_gen;
+END_RCPP
+}
+// human_phase1_rank_cpp
+DataFrame human_phase1_rank_cpp(IntegerVector state, int k);
+RcppExport SEXP _cayleyR_human_phase1_rank_cpp(SEXP stateSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type state(stateSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(human_phase1_rank_cpp(state, k));
+    return rcpp_result_gen;
+END_RCPP
+}
+// human_algorithm_cpp
+List human_algorithm_cpp(IntegerVector start_state, int k, double max_ops, bool final_rotate);
+RcppExport SEXP _cayleyR_human_algorithm_cpp(SEXP start_stateSEXP, SEXP kSEXP, SEXP max_opsSEXP, SEXP final_rotateSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type start_state(start_stateSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type max_ops(max_opsSEXP);
+    Rcpp::traits::input_parameter< bool >::type final_rotate(final_rotateSEXP);
+    rcpp_result_gen = Rcpp::wrap(human_algorithm_cpp(start_state, k, max_ops, final_rotate));
     return rcpp_result_gen;
 END_RCPP
 }
 // short_path_bfs_cpp
-List short_path_bfs_cpp(IntegerVector start_state, CharacterVector path, int k, int n_hits);
-RcppExport SEXP _cayleyR_short_path_bfs_cpp(SEXP start_stateSEXP, SEXP pathSEXP, SEXP kSEXP, SEXP n_hitsSEXP) {
+List short_path_bfs_cpp(IntegerVector start_state, CharacterVector path, int k, int depth);
+RcppExport SEXP _cayleyR_short_path_bfs_cpp(SEXP start_stateSEXP, SEXP pathSEXP, SEXP kSEXP, SEXP depthSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type start_state(start_stateSEXP);
     Rcpp::traits::input_parameter< CharacterVector >::type path(pathSEXP);
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< int >::type n_hits(n_hitsSEXP);
-    rcpp_result_gen = Rcpp::wrap(short_path_bfs_cpp(start_state, path, k, n_hits));
+    Rcpp::traits::input_parameter< int >::type depth(depthSEXP);
+    rcpp_result_gen = Rcpp::wrap(short_path_bfs_cpp(start_state, path, k, depth));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -162,6 +263,324 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// state_store_create
+SEXP state_store_create(int perm_length, int init_capacity);
+RcppExport SEXP _cayleyR_state_store_create(SEXP perm_lengthSEXP, SEXP init_capacitySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type perm_length(perm_lengthSEXP);
+    Rcpp::traits::input_parameter< int >::type init_capacity(init_capacitySEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_create(perm_length, init_capacity));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_size
+int state_store_size(SEXP xp);
+RcppExport SEXP _cayleyR_state_store_size(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_size(xp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_unique_count
+int state_store_unique_count(SEXP xp);
+RcppExport SEXP _cayleyR_state_store_unique_count(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_unique_count(xp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_perm_length
+int state_store_perm_length(SEXP xp);
+RcppExport SEXP _cayleyR_state_store_perm_length(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_perm_length(xp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_add_batch
+int state_store_add_batch(SEXP xp, IntegerMatrix states_mat, IntegerVector step_vec, IntegerVector combo_vec, int cycle_val, IntegerVector op_vec, IntegerVector nL_vec, IntegerVector nR_vec, IntegerVector nX_vec, NumericVector theta_vec, NumericVector phi_vec, NumericVector omega_vec);
+RcppExport SEXP _cayleyR_state_store_add_batch(SEXP xpSEXP, SEXP states_matSEXP, SEXP step_vecSEXP, SEXP combo_vecSEXP, SEXP cycle_valSEXP, SEXP op_vecSEXP, SEXP nL_vecSEXP, SEXP nR_vecSEXP, SEXP nX_vecSEXP, SEXP theta_vecSEXP, SEXP phi_vecSEXP, SEXP omega_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type states_mat(states_matSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type step_vec(step_vecSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type combo_vec(combo_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type cycle_val(cycle_valSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type op_vec(op_vecSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type nL_vec(nL_vecSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type nR_vec(nR_vecSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type nX_vec(nX_vecSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type theta_vec(theta_vecSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type phi_vec(phi_vecSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type omega_vec(omega_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_add_batch(xp, states_mat, step_vec, combo_vec, cycle_val, op_vec, nL_vec, nR_vec, nX_vec, theta_vec, phi_vec, omega_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_get_state
+IntegerVector state_store_get_state(SEXP xp, int idx);
+RcppExport SEXP _cayleyR_state_store_get_state(SEXP xpSEXP, SEXP idxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< int >::type idx(idxSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_get_state(xp, idx));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_get_meta
+List state_store_get_meta(SEXP xp, int idx);
+RcppExport SEXP _cayleyR_state_store_get_meta(SEXP xpSEXP, SEXP idxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< int >::type idx(idxSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_get_meta(xp, idx));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_lookup
+IntegerVector state_store_lookup(SEXP xp, std::string key);
+RcppExport SEXP _cayleyR_state_store_lookup(SEXP xpSEXP, SEXP keySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< std::string >::type key(keySEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_lookup(xp, key));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_lookup_state
+IntegerVector state_store_lookup_state(SEXP xp, IntegerVector state);
+RcppExport SEXP _cayleyR_state_store_lookup_state(SEXP xpSEXP, SEXP stateSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type state(stateSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_lookup_state(xp, state));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_find_intersections
+CharacterVector state_store_find_intersections(SEXP xp_a, SEXP xp_b);
+RcppExport SEXP _cayleyR_state_store_find_intersections(SEXP xp_aSEXP, SEXP xp_bSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp_a(xp_aSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type xp_b(xp_bSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_find_intersections(xp_a, xp_b));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_find_best_match
+int state_store_find_best_match(SEXP xp, IntegerVector target, IntegerVector candidate_indices);
+RcppExport SEXP _cayleyR_state_store_find_best_match(SEXP xpSEXP, SEXP targetSEXP, SEXP candidate_indicesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type candidate_indices(candidate_indicesSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_find_best_match(xp, target, candidate_indices));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_get_states
+IntegerMatrix state_store_get_states(SEXP xp, IntegerVector indices);
+RcppExport SEXP _cayleyR_state_store_get_states(SEXP xpSEXP, SEXP indicesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type indices(indicesSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_get_states(xp, indices));
+    return rcpp_result_gen;
+END_RCPP
+}
+// human_distance_cpp
+NumericVector human_distance_cpp(IntegerMatrix states, IntegerVector target, int k);
+RcppExport SEXP _cayleyR_human_distance_cpp(SEXP statesSEXP, SEXP targetSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type states(statesSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(human_distance_cpp(states, target, k));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_human_scores
+NumericVector state_store_human_scores(SEXP xp, IntegerVector candidate_indices, IntegerVector target, int k);
+RcppExport SEXP _cayleyR_state_store_human_scores(SEXP xpSEXP, SEXP candidate_indicesSEXP, SEXP targetSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type candidate_indices(candidate_indicesSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_human_scores(xp, candidate_indices, target, k));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_find_best_match_scored
+int state_store_find_best_match_scored(SEXP xp, IntegerVector candidate_indices, NumericVector scores);
+RcppExport SEXP _cayleyR_state_store_find_best_match_scored(SEXP xpSEXP, SEXP candidate_indicesSEXP, SEXP scoresSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type candidate_indices(candidate_indicesSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type scores(scoresSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_find_best_match_scored(xp, candidate_indices, scores));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_indices_for_cycle
+IntegerVector state_store_indices_for_cycle(SEXP xp, int target_cycle);
+RcppExport SEXP _cayleyR_state_store_indices_for_cycle(SEXP xpSEXP, SEXP target_cycleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< int >::type target_cycle(target_cycleSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_indices_for_cycle(xp, target_cycle));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_filter_middle
+IntegerVector state_store_filter_middle(SEXP xp, int target_cycle, int skip_first, int skip_last);
+RcppExport SEXP _cayleyR_state_store_filter_middle(SEXP xpSEXP, SEXP target_cycleSEXP, SEXP skip_firstSEXP, SEXP skip_lastSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< int >::type target_cycle(target_cycleSEXP);
+    Rcpp::traits::input_parameter< int >::type skip_first(skip_firstSEXP);
+    Rcpp::traits::input_parameter< int >::type skip_last(skip_lastSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_filter_middle(xp, target_cycle, skip_first, skip_last));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_set_opd
+void state_store_set_opd(SEXP xp, int target_cycle, IntegerVector combos);
+RcppExport SEXP _cayleyR_state_store_set_opd(SEXP xpSEXP, SEXP target_cycleSEXP, SEXP combosSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< int >::type target_cycle(target_cycleSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type combos(combosSEXP);
+    state_store_set_opd(xp, target_cycle, combos);
+    return R_NilValue;
+END_RCPP
+}
+// state_store_clear_opd
+void state_store_clear_opd(SEXP xp);
+RcppExport SEXP _cayleyR_state_store_clear_opd(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    state_store_clear_opd(xp);
+    return R_NilValue;
+END_RCPP
+}
+// state_store_clear
+void state_store_clear(SEXP xp);
+RcppExport SEXP _cayleyR_state_store_clear(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    state_store_clear(xp);
+    return R_NilValue;
+END_RCPP
+}
+// state_store_combos_for_state
+IntegerVector state_store_combos_for_state(SEXP xp, IntegerVector state_vec, int target_cycle);
+RcppExport SEXP _cayleyR_state_store_combos_for_state(SEXP xpSEXP, SEXP state_vecSEXP, SEXP target_cycleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type state_vec(state_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type target_cycle(target_cycleSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_combos_for_state(xp, state_vec, target_cycle));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_to_dataframe
+DataFrame state_store_to_dataframe(SEXP xp);
+RcppExport SEXP _cayleyR_state_store_to_dataframe(SEXP xpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_to_dataframe(xp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_collect_ops
+CharacterVector state_store_collect_ops(SEXP xp, int target_cycle, int target_combo, int end_step);
+RcppExport SEXP _cayleyR_state_store_collect_ops(SEXP xpSEXP, SEXP target_cycleSEXP, SEXP target_comboSEXP, SEXP end_stepSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< int >::type target_cycle(target_cycleSEXP);
+    Rcpp::traits::input_parameter< int >::type target_combo(target_comboSEXP);
+    Rcpp::traits::input_parameter< int >::type end_step(end_stepSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_collect_ops(xp, target_cycle, target_combo, end_step));
+    return rcpp_result_gen;
+END_RCPP
+}
+// state_store_reconstruct_path
+Nullable<CharacterVector> state_store_reconstruct_path(SEXP xp, IntegerMatrix bridge_states_mat, IntegerVector target_state_vec, int target_cycle, int target_combo);
+RcppExport SEXP _cayleyR_state_store_reconstruct_path(SEXP xpSEXP, SEXP bridge_states_matSEXP, SEXP target_state_vecSEXP, SEXP target_cycleSEXP, SEXP target_comboSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type bridge_states_mat(bridge_states_matSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type target_state_vec(target_state_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type target_cycle(target_cycleSEXP);
+    Rcpp::traits::input_parameter< int >::type target_combo(target_comboSEXP);
+    rcpp_result_gen = Rcpp::wrap(state_store_reconstruct_path(xp, bridge_states_mat, target_state_vec, target_cycle, target_combo));
+    return rcpp_result_gen;
+END_RCPP
+}
+// analyze_combos_to_store_cpp
+int analyze_combos_to_store_cpp(SEXP xp, CharacterVector combinations, IntegerVector start_state, int k, int cycle_val);
+RcppExport SEXP _cayleyR_analyze_combos_to_store_cpp(SEXP xpSEXP, SEXP combinationsSEXP, SEXP start_stateSEXP, SEXP kSEXP, SEXP cycle_valSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type combinations(combinationsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type start_state(start_stateSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type cycle_val(cycle_valSEXP);
+    rcpp_result_gen = Rcpp::wrap(analyze_combos_to_store_cpp(xp, combinations, start_state, k, cycle_val));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_cayleyR_shift_left_simple", (DL_FUNC) &_cayleyR_shift_left_simple, 1},
@@ -173,9 +592,41 @@ static const R_CallMethodDef CallEntries[] = {
     {"_cayleyR_get_reachable_states_light_cpp", (DL_FUNC) &_cayleyR_get_reachable_states_light_cpp, 3},
     {"_cayleyR_find_best_random_combinations_cpp", (DL_FUNC) &_cayleyR_find_best_random_combinations_cpp, 5},
     {"_cayleyR_openmp_threads", (DL_FUNC) &_cayleyR_openmp_threads, 0},
-    {"_cayleyR_apply_operations", (DL_FUNC) &_cayleyR_apply_operations, 4},
+    {"_cayleyR_apply_operations", (DL_FUNC) &_cayleyR_apply_operations, 5},
+    {"_cayleyR_cycle_shortcut_cpp", (DL_FUNC) &_cayleyR_cycle_shortcut_cpp, 12},
+    {"_cayleyR_cayley_bfs_full_cpp", (DL_FUNC) &_cayleyR_cayley_bfs_full_cpp, 3},
+    {"_cayleyR_cayley_graph_diameter_cpp", (DL_FUNC) &_cayleyR_cayley_graph_diameter_cpp, 6},
+    {"_cayleyR_human_table_probe_cpp", (DL_FUNC) &_cayleyR_human_table_probe_cpp, 2},
+    {"_cayleyR_run_length_cpp", (DL_FUNC) &_cayleyR_run_length_cpp, 1},
+    {"_cayleyR_human_phase1_rank_cpp", (DL_FUNC) &_cayleyR_human_phase1_rank_cpp, 2},
+    {"_cayleyR_human_algorithm_cpp", (DL_FUNC) &_cayleyR_human_algorithm_cpp, 4},
     {"_cayleyR_short_path_bfs_cpp", (DL_FUNC) &_cayleyR_short_path_bfs_cpp, 4},
     {"_cayleyR_sparse_bfs_cpp", (DL_FUNC) &_cayleyR_sparse_bfs_cpp, 5},
+    {"_cayleyR_state_store_create", (DL_FUNC) &_cayleyR_state_store_create, 2},
+    {"_cayleyR_state_store_size", (DL_FUNC) &_cayleyR_state_store_size, 1},
+    {"_cayleyR_state_store_unique_count", (DL_FUNC) &_cayleyR_state_store_unique_count, 1},
+    {"_cayleyR_state_store_perm_length", (DL_FUNC) &_cayleyR_state_store_perm_length, 1},
+    {"_cayleyR_state_store_add_batch", (DL_FUNC) &_cayleyR_state_store_add_batch, 12},
+    {"_cayleyR_state_store_get_state", (DL_FUNC) &_cayleyR_state_store_get_state, 2},
+    {"_cayleyR_state_store_get_meta", (DL_FUNC) &_cayleyR_state_store_get_meta, 2},
+    {"_cayleyR_state_store_lookup", (DL_FUNC) &_cayleyR_state_store_lookup, 2},
+    {"_cayleyR_state_store_lookup_state", (DL_FUNC) &_cayleyR_state_store_lookup_state, 2},
+    {"_cayleyR_state_store_find_intersections", (DL_FUNC) &_cayleyR_state_store_find_intersections, 2},
+    {"_cayleyR_state_store_find_best_match", (DL_FUNC) &_cayleyR_state_store_find_best_match, 3},
+    {"_cayleyR_state_store_get_states", (DL_FUNC) &_cayleyR_state_store_get_states, 2},
+    {"_cayleyR_human_distance_cpp", (DL_FUNC) &_cayleyR_human_distance_cpp, 3},
+    {"_cayleyR_state_store_human_scores", (DL_FUNC) &_cayleyR_state_store_human_scores, 4},
+    {"_cayleyR_state_store_find_best_match_scored", (DL_FUNC) &_cayleyR_state_store_find_best_match_scored, 3},
+    {"_cayleyR_state_store_indices_for_cycle", (DL_FUNC) &_cayleyR_state_store_indices_for_cycle, 2},
+    {"_cayleyR_state_store_filter_middle", (DL_FUNC) &_cayleyR_state_store_filter_middle, 4},
+    {"_cayleyR_state_store_set_opd", (DL_FUNC) &_cayleyR_state_store_set_opd, 3},
+    {"_cayleyR_state_store_clear_opd", (DL_FUNC) &_cayleyR_state_store_clear_opd, 1},
+    {"_cayleyR_state_store_clear", (DL_FUNC) &_cayleyR_state_store_clear, 1},
+    {"_cayleyR_state_store_combos_for_state", (DL_FUNC) &_cayleyR_state_store_combos_for_state, 3},
+    {"_cayleyR_state_store_to_dataframe", (DL_FUNC) &_cayleyR_state_store_to_dataframe, 1},
+    {"_cayleyR_state_store_collect_ops", (DL_FUNC) &_cayleyR_state_store_collect_ops, 4},
+    {"_cayleyR_state_store_reconstruct_path", (DL_FUNC) &_cayleyR_state_store_reconstruct_path, 5},
+    {"_cayleyR_analyze_combos_to_store_cpp", (DL_FUNC) &_cayleyR_analyze_combos_to_store_cpp, 5},
     {NULL, NULL, 0}
 };
 

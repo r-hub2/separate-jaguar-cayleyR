@@ -5,55 +5,13 @@
 #include <vector>
 #include <unordered_set>
 #include "cayley_utils.h"
+#include "celestial_coords.h"
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
 using namespace Rcpp;
-
-struct CelestialCoords {
-  int nL;
-  int nR;
-  int nX;
-  double theta;
-  double phi;
-  double omega_conformal;
-};
-
-CelestialCoords update_coords(const CelestialCoords& coords, int delta_L, int delta_R, int delta_X) {
-  CelestialCoords new_coords;
-  new_coords.nL = coords.nL + delta_L;
-  new_coords.nR = coords.nR + delta_R;
-  new_coords.nX = coords.nX + delta_X;
-  
-  double r = std::sqrt(new_coords.nL * new_coords.nL + 
-                       new_coords.nR * new_coords.nR + 
-                       new_coords.nX * new_coords.nX);
-  
-  new_coords.omega_conformal = r;
-  
-  if (r > 1e-10) {
-    new_coords.theta = std::acos(new_coords.nX / r);
-    new_coords.phi = std::atan2((double)new_coords.nR, (double)new_coords.nL);
-  } else {
-    new_coords.theta = 0.0;
-    new_coords.phi = 0.0;
-  }
-  
-  return new_coords;
-}
-
-CelestialCoords create_empty_coords() {
-  CelestialCoords coords;
-  coords.nL = 0;
-  coords.nR = 0;
-  coords.nX = 0;
-  coords.theta = 0.0;
-  coords.phi = 0.0;
-  coords.omega_conformal = 0.0;
-  return coords;
-}
 
 CelestialCoords extract_coords_from_list(List cl) {
   CelestialCoords coords;
@@ -329,53 +287,63 @@ int openmp_threads() {
 
 // [[Rcpp::export]]
 List apply_operations(IntegerVector state, CharacterVector operations, int k,
-                      Nullable<List> coords = R_NilValue) {
-  IntegerVector current_state = clone(state);
-  
+                      Nullable<List> coords = R_NilValue,
+                      bool compute_coords = true) {
+  int n = state.size();
+  // Work with raw int vector to avoid R allocations per operation
+  std::vector<int> cur(state.begin(), state.end());
+
   CelestialCoords current_coords;
-  if (coords.isNull()) {
-    current_coords = create_empty_coords();
-  } else {
-    List coords_list = coords.get();
-    current_coords = extract_coords_from_list(coords_list);
-  }
-  
-  int n_ops = operations.size();
-  
-  for(int i = 0; i < n_ops; i++) {
-    std::string op = as<std::string>(operations[i]);
-    
-    if(op == "L" || op == "1") {
-      current_coords = update_coords(current_coords, 1, 0, 0);
-      int n = current_state.size();
-      IntegerVector res(n);
-      for(int j = 0; j < n - 1; j++) res[j] = current_state[j + 1]; 
-      res[n - 1] = current_state[0];
-      current_state = res;
-    } else if(op == "R" || op == "2") {
-      current_coords = update_coords(current_coords, 0, 1, 0);
-      int n = current_state.size();
-      IntegerVector res(n);
-      res[0] = current_state[n - 1]; 
-      for(int j = 1; j < n; j++) res[j] = current_state[j - 1];
-      current_state = res;
-    } else if(op == "X" || op == "3") {
-      current_coords = update_coords(current_coords, 0, 0, 1);
-      int n = current_state.size();
-      int end = std::min(k, n); 
-      for(int j = 0; j < end/2; j++){
-        int tmp = current_state[j];
-        current_state[j] = current_state[end - 1 - j];
-        current_state[end - 1 - j] = tmp;
-      }
+  if (compute_coords) {
+    if (coords.isNull()) {
+      current_coords = create_empty_coords();
     } else {
-      stop("Unknown operation: " + op);
+      List coords_list = coords.get();
+      current_coords = extract_coords_from_list(coords_list);
     }
   }
-  
-  return List::create(
-    Named("state") = current_state,
-    Named("coords") = pack_coords(current_coords)
-  );
+
+  int n_ops = operations.size();
+
+  for(int i = 0; i < n_ops; i++) {
+    const char* op = CHAR(STRING_ELT(operations, i));
+    char c = op[0];
+
+    if(c == 'L' || c == '1') {
+      if (compute_coords) current_coords = update_coords(current_coords, 1, 0, 0);
+      int tmp = cur[0];
+      for(int j = 0; j < n - 1; j++) cur[j] = cur[j + 1];
+      cur[n - 1] = tmp;
+    } else if(c == 'R' || c == '2') {
+      if (compute_coords) current_coords = update_coords(current_coords, 0, 1, 0);
+      int tmp = cur[n - 1];
+      for(int j = n - 1; j > 0; j--) cur[j] = cur[j - 1];
+      cur[0] = tmp;
+    } else if(c == 'X' || c == '3') {
+      if (compute_coords) current_coords = update_coords(current_coords, 0, 0, 1);
+      int end = std::min(k, n);
+      for(int j = 0; j < end/2; j++){
+        int tmp = cur[j];
+        cur[j] = cur[end - 1 - j];
+        cur[end - 1 - j] = tmp;
+      }
+    } else {
+      stop("Unknown operation: %s", op);
+    }
+  }
+
+  // Convert back to IntegerVector for R
+  IntegerVector result_state(cur.begin(), cur.end());
+
+  if (compute_coords) {
+    return List::create(
+      Named("state") = result_state,
+      Named("coords") = pack_coords(current_coords)
+    );
+  } else {
+    return List::create(
+      Named("state") = result_state
+    );
+  }
 }
 

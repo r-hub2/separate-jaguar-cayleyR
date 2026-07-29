@@ -37,15 +37,143 @@ openmp_threads <- function() {
     .Call(`_cayleyR_openmp_threads`)
 }
 
-apply_operations <- function(state, operations, k, coords = NULL) {
-    .Call(`_cayleyR_apply_operations`, state, operations, k, coords)
+apply_operations <- function(state, operations, k, coords = NULL, compute_coords = TRUE) {
+    .Call(`_cayleyR_apply_operations`, state, operations, k, coords, compute_coords)
 }
 
-short_path_bfs_cpp <- function(start_state, path, k, n_hits) {
-    .Call(`_cayleyR_short_path_bfs_cpp`, start_state, path, k, n_hits)
+cycle_shortcut_cpp <- function(start_state, path, k, points, moves, combo_length, n_samples, n_top, sort_by, max_cycle_len, n_threads, verbose) {
+    .Call(`_cayleyR_cycle_shortcut_cpp`, start_state, path, k, points, moves, combo_length, n_samples, n_top, sort_by, max_cycle_len, n_threads, verbose)
+}
+
+cayley_bfs_full_cpp <- function(start_state, k, moves) {
+    .Call(`_cayleyR_cayley_bfs_full_cpp`, start_state, k, moves)
+}
+
+cayley_graph_diameter_cpp <- function(start_state, k, moves, method, max_pairs, verbose) {
+    .Call(`_cayleyR_cayley_graph_diameter_cpp`, start_state, k, moves, method, max_pairs, verbose)
+}
+
+human_table_probe_cpp <- function(n, k) {
+    .Call(`_cayleyR_human_table_probe_cpp`, n, k)
+}
+
+run_length_cpp <- function(state) {
+    .Call(`_cayleyR_run_length_cpp`, state)
+}
+
+human_phase1_rank_cpp <- function(state, k) {
+    .Call(`_cayleyR_human_phase1_rank_cpp`, state, k)
+}
+
+human_algorithm_cpp <- function(start_state, k, max_ops, final_rotate) {
+    .Call(`_cayleyR_human_algorithm_cpp`, start_state, k, max_ops, final_rotate)
+}
+
+short_path_bfs_cpp <- function(start_state, path, k, depth) {
+    .Call(`_cayleyR_short_path_bfs_cpp`, start_state, path, k, depth)
 }
 
 sparse_bfs_cpp <- function(start_state, k, n_hubs = 7L, n_random = 3L, max_levels = 1000L) {
     .Call(`_cayleyR_sparse_bfs_cpp`, start_state, k, n_hubs, n_random, max_levels)
+}
+
+state_store_create <- function(perm_length, init_capacity = 10000L) {
+    .Call(`_cayleyR_state_store_create`, perm_length, init_capacity)
+}
+
+state_store_size <- function(xp) {
+    .Call(`_cayleyR_state_store_size`, xp)
+}
+
+state_store_unique_count <- function(xp) {
+    .Call(`_cayleyR_state_store_unique_count`, xp)
+}
+
+state_store_perm_length <- function(xp) {
+    .Call(`_cayleyR_state_store_perm_length`, xp)
+}
+
+state_store_add_batch <- function(xp, states_mat, step_vec, combo_vec, cycle_val, op_vec, nL_vec, nR_vec, nX_vec, theta_vec, phi_vec, omega_vec) {
+    .Call(`_cayleyR_state_store_add_batch`, xp, states_mat, step_vec, combo_vec, cycle_val, op_vec, nL_vec, nR_vec, nX_vec, theta_vec, phi_vec, omega_vec)
+}
+
+state_store_get_state <- function(xp, idx) {
+    .Call(`_cayleyR_state_store_get_state`, xp, idx)
+}
+
+state_store_get_meta <- function(xp, idx) {
+    .Call(`_cayleyR_state_store_get_meta`, xp, idx)
+}
+
+state_store_lookup <- function(xp, key) {
+    .Call(`_cayleyR_state_store_lookup`, xp, key)
+}
+
+state_store_lookup_state <- function(xp, state) {
+    .Call(`_cayleyR_state_store_lookup_state`, xp, state)
+}
+
+state_store_find_intersections <- function(xp_a, xp_b) {
+    .Call(`_cayleyR_state_store_find_intersections`, xp_a, xp_b)
+}
+
+state_store_find_best_match <- function(xp, target, candidate_indices) {
+    .Call(`_cayleyR_state_store_find_best_match`, xp, target, candidate_indices)
+}
+
+state_store_get_states <- function(xp, indices) {
+    .Call(`_cayleyR_state_store_get_states`, xp, indices)
+}
+
+human_distance_cpp <- function(states, target, k) {
+    .Call(`_cayleyR_human_distance_cpp`, states, target, k)
+}
+
+state_store_human_scores <- function(xp, candidate_indices, target, k) {
+    .Call(`_cayleyR_state_store_human_scores`, xp, candidate_indices, target, k)
+}
+
+state_store_find_best_match_scored <- function(xp, candidate_indices, scores) {
+    .Call(`_cayleyR_state_store_find_best_match_scored`, xp, candidate_indices, scores)
+}
+
+state_store_indices_for_cycle <- function(xp, target_cycle) {
+    .Call(`_cayleyR_state_store_indices_for_cycle`, xp, target_cycle)
+}
+
+state_store_filter_middle <- function(xp, target_cycle, skip_first, skip_last) {
+    .Call(`_cayleyR_state_store_filter_middle`, xp, target_cycle, skip_first, skip_last)
+}
+
+state_store_set_opd <- function(xp, target_cycle, combos) {
+    invisible(.Call(`_cayleyR_state_store_set_opd`, xp, target_cycle, combos))
+}
+
+state_store_clear_opd <- function(xp) {
+    invisible(.Call(`_cayleyR_state_store_clear_opd`, xp))
+}
+
+state_store_clear <- function(xp) {
+    invisible(.Call(`_cayleyR_state_store_clear`, xp))
+}
+
+state_store_combos_for_state <- function(xp, state_vec, target_cycle) {
+    .Call(`_cayleyR_state_store_combos_for_state`, xp, state_vec, target_cycle)
+}
+
+state_store_to_dataframe <- function(xp) {
+    .Call(`_cayleyR_state_store_to_dataframe`, xp)
+}
+
+state_store_collect_ops <- function(xp, target_cycle, target_combo, end_step) {
+    .Call(`_cayleyR_state_store_collect_ops`, xp, target_cycle, target_combo, end_step)
+}
+
+state_store_reconstruct_path <- function(xp, bridge_states_mat, target_state_vec, target_cycle, target_combo) {
+    .Call(`_cayleyR_state_store_reconstruct_path`, xp, bridge_states_mat, target_state_vec, target_cycle, target_combo)
+}
+
+analyze_combos_to_store_cpp <- function(xp, combinations, start_state, k, cycle_val) {
+    .Call(`_cayleyR_analyze_combos_to_store_cpp`, xp, combinations, start_state, k, cycle_val)
 }
 
