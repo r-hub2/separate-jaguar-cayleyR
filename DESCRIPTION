@@ -18,7 +18,7 @@ Description: Implements algorithms for analyzing Cayley graphs of
     graphs too large to enumerate, and convex and non-convex hulls for
     measuring the solid such states span. The method Iterative Cycle
     Intersection (ICI) is described in Yuri Baramykov (2026)
-    <arXiv:2607.13219>.
+    <doi:10.48550/arXiv.2607.13219>.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -32,6 +32,6 @@ URL: https://github.com/Zabis13/cayleyR,
         https://arxiv.org/abs/2607.13219
 BugReports: https://github.com/Zabis13/cayleyR/issues
 NeedsCompilation: yes
-Packaged: 2026-07-29 17:18:54 UTC; yuri
+Packaged: 2026-07-29 18:09:07 UTC; yuri
 Author: Yuri Baramykov [aut, cre] (<https://orcid.org/0009-0000-7627-4217>)
 Maintainer: Yuri Baramykov <lbsbmsu@mail.ru>
