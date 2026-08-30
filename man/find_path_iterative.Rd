@@ -7,8 +7,9 @@
 find_path_iterative(
   start_state,
   final_state,
-  k,
-  moves = c("1", "2", "3"),
+  k = NULL,
+  moves = NULL,
+  group = NULL,
   combo_length = 20,
   n_samples = 200,
   n_top = 10,
@@ -21,6 +22,7 @@ find_path_iterative(
   one_sided = FALSE,
   distance_method = "manhattan",
   sort_by = c("longest", "most_unique"),
+  max_scored = NULL,
   verbose = TRUE
 )
 }
@@ -29,9 +31,16 @@ find_path_iterative(
 
 \item{final_state}{Integer vector, the target permutation state}
 
-\item{k}{Integer, parameter for reverse operations}
+\item{k}{Integer, parameter for reverse operations. Ignored when \code{group} is
+given.}
 
-\item{moves}{Character vector, allowed operations (default c("1", "2", "3"))}
+\item{moves}{Allowed operations, naming a subset of the group's alphabet
+(default: all of it)}
+
+\item{group}{A \code{\link{perm_group}}. When \code{NULL} (default) the
+arguments describe TopSpin. Only \code{distance_method = "manhattan"} is
+defined for other groups: "human" and "breakpoints" score closeness on a
+ring, which a cube has no counterpart for.}
 
 \item{combo_length}{Integer, length of random operation sequences (default 20)}
 
@@ -68,6 +77,15 @@ selection. One of "manhattan" (sum of absolute differences) or "breakpoints"
 \item{sort_by}{Character vector of sorting criteria for combo selection.
 See \code{\link{find_best_random_combinations}} for details.
 Default: c("longest", "most_unique").}
+
+\item{max_scored}{Integer, at most this many candidates are scored when
+choosing a bridge; a random sample is taken when a cycle offers more.
+\code{NULL} (default) scores every candidate. Only methods that pay per
+state are affected -- "manhattan" and "human" score in C++ and ignore it.
+A cycle's candidates lie along one sequence rather than spread across the
+space, so a sample of them ranks nearly as well as all of them; with
+"cube4_model", where a state costs milliseconds, this is the difference
+between seconds and minutes per cycle.}
 
 \item{verbose}{Logical, if TRUE prints progress messages (default TRUE)}
 }

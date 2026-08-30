@@ -25,12 +25,12 @@ reverse_prefix <- function(state, k, coords = NULL) {
     .Call(`_cayleyR_reverse_prefix`, state, k, coords)
 }
 
-get_reachable_states_light_cpp <- function(start_state, allowed_positions, k) {
-    .Call(`_cayleyR_get_reachable_states_light_cpp`, start_state, allowed_positions, k)
+get_reachable_states_light_cpp <- function(start_state, allowed_positions, group, max_moves = 10000000L) {
+    .Call(`_cayleyR_get_reachable_states_light_cpp`, start_state, allowed_positions, group, max_moves)
 }
 
-find_best_random_combinations_cpp <- function(start_state, k, moves, combo_length, n_samples) {
-    .Call(`_cayleyR_find_best_random_combinations_cpp`, start_state, k, moves, combo_length, n_samples)
+find_best_random_combinations_cpp <- function(start_state, group, moves, combo_length, n_samples, max_moves = 10000000L) {
+    .Call(`_cayleyR_find_best_random_combinations_cpp`, start_state, group, moves, combo_length, n_samples, max_moves)
 }
 
 openmp_threads <- function() {
@@ -41,16 +41,329 @@ apply_operations <- function(state, operations, k, coords = NULL, compute_coords
     .Call(`_cayleyR_apply_operations`, state, operations, k, coords, compute_coords)
 }
 
-cycle_shortcut_cpp <- function(start_state, path, k, points, moves, combo_length, n_samples, n_top, sort_by, max_cycle_len, n_threads, verbose) {
-    .Call(`_cayleyR_cycle_shortcut_cpp`, start_state, path, k, points, moves, combo_length, n_samples, n_top, sort_by, max_cycle_len, n_threads, verbose)
+#' Random Scrambles From the Solved State
+#'
+#' Walks away from the identity by a uniformly random number of moves between
+#' 1 and \code{max_depth}, \code{n} times over. Uniform in depth is the
+#' sampling ADI asks for: it is what lets accuracy spread outward from the
+#' states near the goal without any weighting in the loss.
+#'
+#' The walk never undoes its own last move. A move immediately followed by its
+#' inverse returns the state to where it was and would quietly make the
+#' scramble shorter than its label. Longer cycles are left alone -- they are
+#' rarer, and ADI's targets do not depend on the label being exact anyway.
+#'
+#' @param group External pointer to a \code{perm_group}
+#' @param n Number of states to generate
+#' @param max_depth Longest scramble
+#' @return List with \code{states} (n x state_len integer matrix) and
+#'   \code{depth} (integer vector, the scramble length of each row)
+#' @keywords internal
+cube_adi_scramble <- function(group, n, max_depth) {
+    .Call(`_cayleyR_cube_adi_scramble`, group, n, max_depth)
 }
 
-cayley_bfs_full_cpp <- function(start_state, k, moves) {
-    .Call(`_cayleyR_cayley_bfs_full_cpp`, start_state, k, moves)
+#' All Children of Each State
+#'
+#' Applies every move to every state. The result is one matrix of
+#' \code{nrow(states) * n_moves} children, laid out state-major so that row
+#' \code{(i - 1) * n_moves + a} is child \code{a} of state \code{i}. That is
+#' the layout the value network scores in a single pass, and the layout
+#' \code{cube_adi_targets} reads back.
+#'
+#' @param group External pointer to a \code{perm_group}
+#' @param states Integer matrix, one state per row
+#' @return List with \code{children} (integer matrix, state-major) and
+#'   \code{solved} (logical vector, whether each child is the identity)
+#' @keywords internal
+cube_adi_children <- function(group, states) {
+    .Call(`_cayleyR_cube_adi_children`, group, states)
 }
 
-cayley_graph_diameter_cpp <- function(start_state, k, moves, method, max_pairs, verbose) {
-    .Call(`_cayleyR_cayley_graph_diameter_cpp`, start_state, k, moves, method, max_pairs, verbose)
+#' Hash a Batch of States to Keys
+#'
+#' A search has to recognise a state it has already reached, and the obvious
+#' way to do that from R -- \code{paste(state, collapse = ",")} per row -- costs
+#' more than the network forward pass once the open list runs to hundreds of
+#' thousands of nodes. This does the same job in one pass over the matrix.
+#'
+#' The keys are 64-bit FNV-1a hashes returned as doubles. A double carries 53
+#' bits exactly, so the hash is folded down to 53 bits rather than truncated:
+#' the alternative is silently rounding two distinct hashes onto the same
+#' double. Collisions are still possible in principle -- at 2^53 keys and a
+#' search of 10^6 nodes the chance is around 10^-4 -- and the caller that
+#' cannot afford one has to compare the states themselves.
+#'
+#' @param states Integer matrix, one state per row
+#' @return Numeric vector of keys, one per row
+#' @keywords internal
+cube_adi_keys <- function(states) {
+    .Call(`_cayleyR_cube_adi_keys`, states)
+}
+
+#' One-Hot Encoding of States by Piece
+#'
+#' The piece encoding of \code{cube_adi_model(encoding = "piece")}, built here
+#' rather than in R because it runs on every batch of every iteration. The R
+#' version allocates a \code{n x P x P*W} array and fills it with a loop per
+#' piece, which on a batch of a few thousand costs more than the training step
+#' it feeds.
+#'
+#' Each of the \code{P} piece slots gets \code{P * W} bits, one per (piece,
+#' turning) pair, and exactly one of them is set: which piece is sitting in
+#' that slot, and which way round. The piece is read off the slot's first
+#' sticker, since every sticker of a slot comes from one piece.
+#'
+#' @param states Integer matrix, one state per row
+#' @param first_slot Integer vector, the first sticker position of each slot
+#' @param home Integer vector, the piece each sticker belongs to (1-based)
+#' @param turn Integer vector, which of its piece's slots each sticker is
+#' @param n_piece Number of pieces
+#' @param width Slots per piece
+#'
+#' The result is a flat \code{n x (n_piece * n_piece * width)} matrix rather
+#' than an \code{n x n_piece x (n_piece * width)} array, because the network
+#' runs about twenty-five times faster per state on a flat input than on a
+#' two-dimensional one with a flatten over it.
+#'
+#' Flat here means exactly what R's own flattening of that array means: the
+#' array is column-major, so its \code{(i, p, d)} lands at column
+#' \code{d * n_piece + p}, with the slots adjacent and the bits strided. That
+#' is not the order one would choose writing this from scratch -- slot-major
+#' would be the natural one -- but it is the order every other view of this
+#' data already has, and having two orders in play is how the encoding and the
+#' test that checks it come to disagree while both look right.
+#'
+#' @return Numeric matrix \code{n x (n_piece * n_piece * width)}
+#' @keywords internal
+cube_adi_encode_pieces <- function(states, first_slot, home, turn, n_piece, width) {
+    .Call(`_cayleyR_cube_adi_encode_pieces`, states, first_slot, home, turn, n_piece, width)
+}
+
+#' ADI Targets From Children Values
+#'
+#' The value target of a state is \code{min_a (1 + v(child_a))} and its policy
+#' target is the move attaining that minimum. Value is cost-to-go, so the
+#' network learns a distance and the solved state is zero.
+#'
+#' Solved children are what anchors the scheme. A child that is already solved
+#' contributes exactly 1 no matter what the network says about it, so states
+#' one move from the goal get an exact target from the first iteration onward,
+#' and deeper states inherit that accuracy through their neighbours as
+#' training goes on. This is why ADI needs no weighting by depth.
+#'
+#' @param child_values Numeric vector of network values, one per child, in the
+#'   state-major order \code{cube_adi_children} produces
+#' @param child_solved Logical vector, whether each child is the solved state
+#' @param n_moves Number of moves per state
+#' @return List with \code{value} (numeric) and \code{policy} (integer, the
+#'   1-based index of the best move)
+#' @keywords internal
+cube_adi_targets <- function(child_values, child_solved, n_moves) {
+    .Call(`_cayleyR_cube_adi_targets`, child_values, child_solved, n_moves)
+}
+
+cube_centres_shoot_cpp <- function(state) {
+    .Call(`_cayleyR_cube_centres_shoot_cpp`, state)
+}
+
+cube_centre_counts_cpp <- function(state) {
+    .Call(`_cayleyR_cube_centre_counts_cpp`, state)
+}
+
+cube_choose_shot_cpp <- function(state) {
+    .Call(`_cayleyR_cube_choose_shot_cpp`, state)
+}
+
+cube_find_colour_cpp <- function(state, colour) {
+    .Call(`_cayleyR_cube_find_colour_cpp`, state, colour)
+}
+
+cube_has_pair_cpp <- function(state, colour) {
+    .Call(`_cayleyR_cube_has_pair_cpp`, state, colour)
+}
+
+cube_slice_map_cpp <- function() {
+    .Call(`_cayleyR_cube_slice_map_cpp`)
+}
+
+cube_slice_cells_cpp <- function(face) {
+    .Call(`_cayleyR_cube_slice_cells_cpp`, face)
+}
+
+cube_first_centre_cpp <- function(state, target_face) {
+    .Call(`_cayleyR_cube_first_centre_cpp`, state, target_face)
+}
+
+cube_l_slice_count_cpp <- function(state) {
+    .Call(`_cayleyR_cube_l_slice_count_cpp`, state)
+}
+
+cube_centres_12_cpp <- function(state, target_face = 4L) {
+    .Call(`_cayleyR_cube_centres_12_cpp`, state, target_face)
+}
+
+cube_centres_cpp <- function(state, target_face = 4L) {
+    .Call(`_cayleyR_cube_centres_cpp`, state, target_face)
+}
+
+cube_reduce_cpp <- function(state, target_face = 4L) {
+    .Call(`_cayleyR_cube_reduce_cpp`, state, target_face)
+}
+
+cube_parity_fix_cpp <- function(state, which) {
+    .Call(`_cayleyR_cube_parity_fix_cpp`, state, which)
+}
+
+cube_squeeze_cpp <- function(state) {
+    .Call(`_cayleyR_cube_squeeze_cpp`, state)
+}
+
+cube_lift_path_cpp <- function(path) {
+    .Call(`_cayleyR_cube_lift_path_cpp`, path)
+}
+
+cube_apply_word_cpp <- function(state, word) {
+    .Call(`_cayleyR_cube_apply_word_cpp`, state, word)
+}
+
+cube_word_order_cpp <- function(word, max_order = 1260L) {
+    .Call(`_cayleyR_cube_word_order_cpp`, word, max_order)
+}
+
+cube_read_state_cpp <- function(state) {
+    .Call(`_cayleyR_cube_read_state_cpp`, state)
+}
+
+cube_predicates_cpp <- function(state) {
+    .Call(`_cayleyR_cube_predicates_cpp`, state)
+}
+
+cube_alg_table_cpp <- function(which) {
+    .Call(`_cayleyR_cube_alg_table_cpp`, which)
+}
+
+cube_expand_alg_cpp <- function(notation) {
+    .Call(`_cayleyR_cube_expand_alg_cpp`, notation)
+}
+
+cube_centre_positions_cpp <- function() {
+    .Call(`_cayleyR_cube_centre_positions_cpp`)
+}
+
+cube_moves_cpp <- function(n) {
+    .Call(`_cayleyR_cube_moves_cpp`, n)
+}
+
+cube_move_names_cpp <- function(n) {
+    .Call(`_cayleyR_cube_move_names_cpp`, n)
+}
+
+cube_layer_move_cpp <- function(n, axis, layer, turns) {
+    .Call(`_cayleyR_cube_layer_move_cpp`, n, axis, layer, turns)
+}
+
+cube_identity_cpp <- function(n) {
+    .Call(`_cayleyR_cube_identity_cpp`, n)
+}
+
+cube_is_colour_solved_cpp <- function(state, n) {
+    .Call(`_cayleyR_cube_is_colour_solved_cpp`, state, n)
+}
+
+cube_orbits_cpp <- function(n) {
+    .Call(`_cayleyR_cube_orbits_cpp`, n)
+}
+
+cube_pieces_cpp <- function(n) {
+    .Call(`_cayleyR_cube_pieces_cpp`, n)
+}
+
+cube_progress_cpp <- function(state) {
+    .Call(`_cayleyR_cube_progress_cpp`, state)
+}
+
+cube_pieces_home_cpp <- function(state) {
+    .Call(`_cayleyR_cube_pieces_home_cpp`, state)
+}
+
+cube_solve_cfop_cpp <- function(state, cross_depth, slot_depth) {
+    .Call(`_cayleyR_cube_solve_cfop_cpp`, state, cross_depth, slot_depth)
+}
+
+cube_solve_lbl_cpp <- function(state, cross_depth, corner_depth, edge_depth) {
+    .Call(`_cayleyR_cube_solve_lbl_cpp`, state, cross_depth, corner_depth, edge_depth)
+}
+
+cube_solve_old_pochmann_cpp <- function(state) {
+    .Call(`_cayleyR_cube_solve_old_pochmann_cpp`, state)
+}
+
+cube_solve_m2_cpp <- function(state) {
+    .Call(`_cayleyR_cube_solve_m2_cpp`, state)
+}
+
+cycle_shortcut_cpp <- function(start_state, path, group, points, moves, combo_length, n_samples, n_top, sort_by, max_cycle_len, n_threads, verbose) {
+    .Call(`_cayleyR_cycle_shortcut_cpp`, start_state, path, group, points, moves, combo_length, n_samples, n_top, sort_by, max_cycle_len, n_threads, verbose)
+}
+
+#' Random Walks From the Solved State, With the Moves They Took
+#'
+#' Walks away from the identity and reports the word it walked, which is what
+#' separates this from \code{\link{generate_state}} and from the ADI
+#' scrambler. Knowing the word means knowing a way home --- inverting it solves
+#' the state --- and anything that measures a solver against a reference path
+#' needs exactly that.
+#'
+#' Two switches cover what the callers want, because the two uses pull opposite
+#' ways:
+#'
+#' \describe{
+#'   \item{\code{exact}}{\code{TRUE} walks \code{n_moves} every time.
+#'     \code{FALSE} draws a length uniformly from 1 to \code{n_moves}, which is
+#'     the sampling training asks for: it spreads accuracy outward from the
+#'     goal without any weighting in the loss. Measurement wants the opposite
+#'     --- a fixed depth, so that a result is about that depth and not about a
+#'     mixture dominated by states a move or two from solved.}
+#'   \item{\code{no_undo}}{\code{TRUE} refuses a move that undoes the one
+#'     before it. Such a pair returns the state to where it was and makes the
+#'     walk shorter than its label. Longer cycles are left alone: on the cube
+#'     four quarter turns of one face also come home, and refusing every way
+#'     back would mean searching the group rather than walking it.}
+#' }
+#'
+#' Even with \code{no_undo} the length is an upper bound on the distance to
+#' solved, never a promise. Callers comparing a solver against the returned
+#' word should read it as "no worse than this", which is the safe direction:
+#' the solver is never credited with a shortcut the reference did not have.
+#'
+#' The walk is uniform over the alphabet, so a group given generators without
+#' their inverses is walked with what it has; \code{no_undo} then has nothing
+#' to refuse at those steps and allows them.
+#'
+#' @param group External pointer to a \code{perm_group}
+#' @param n Number of walks to generate
+#' @param n_moves Length of each walk, or the longest one when
+#'   \code{exact = FALSE}
+#' @param exact Walk \code{n_moves} exactly (default), or draw the length
+#'   uniformly from 1 to \code{n_moves}
+#' @param no_undo Refuse a move that immediately undoes the previous one
+#'   (default \code{TRUE})
+#' @return List with \code{states} (n x state_len integer matrix, one walk
+#'   endpoint per row), \code{depth} (integer vector, the length of each walk)
+#'   and \code{moves} (n x n_moves integer matrix of 1-based move indices, the
+#'   word each row walked, padded with \code{NA} past that row's depth)
+#' @keywords internal
+generate_walk_cpp <- function(group, n, n_moves, exact = TRUE, no_undo = TRUE) {
+    .Call(`_cayleyR_generate_walk_cpp`, group, n, n_moves, exact, no_undo)
+}
+
+cayley_bfs_full_cpp <- function(start_state, group, moves) {
+    .Call(`_cayleyR_cayley_bfs_full_cpp`, start_state, group, moves)
+}
+
+cayley_graph_diameter_cpp <- function(start_state, group, moves, method, max_pairs, verbose) {
+    .Call(`_cayleyR_cayley_graph_diameter_cpp`, start_state, group, moves, method, max_pairs, verbose)
 }
 
 human_table_probe_cpp <- function(n, k) {
@@ -69,16 +382,152 @@ human_algorithm_cpp <- function(start_state, k, max_ops, final_rotate) {
     .Call(`_cayleyR_human_algorithm_cpp`, start_state, k, max_ops, final_rotate)
 }
 
-short_path_bfs_cpp <- function(start_state, path, k, depth) {
-    .Call(`_cayleyR_short_path_bfs_cpp`, start_state, path, k, depth)
+cube_kociemba_cpp <- function(state, max_depth1 = 12L, max_depth2 = 18L, node_budget = 2e8) {
+    .Call(`_cayleyR_cube_kociemba_cpp`, state, max_depth1, max_depth2, node_budget)
 }
 
-sparse_bfs_cpp <- function(start_state, k, n_hubs = 7L, n_random = 3L, max_levels = 1000L) {
-    .Call(`_cayleyR_sparse_bfs_cpp`, start_state, k, n_hubs, n_random, max_levels)
+cube_kociemba_init_cpp <- function(table1 = 4194304, depth1 = 0L, table2 = 16777216, depth2 = 0L) {
+    invisible(.Call(`_cayleyR_cube_kociemba_init_cpp`, table1, depth1, table2, depth2))
 }
 
-state_store_create <- function(perm_length, init_capacity = 10000L) {
-    .Call(`_cayleyR_state_store_create`, perm_length, init_capacity)
+cube_cubie_pieces_cpp <- function(state) {
+    .Call(`_cayleyR_cube_cubie_pieces_cpp`, state)
+}
+
+cube_in_g1_cpp <- function(state) {
+    .Call(`_cayleyR_cube_in_g1_cpp`, state)
+}
+
+cube_kociemba_last_cpp <- function() {
+    .Call(`_cayleyR_cube_kociemba_last_cpp`)
+}
+
+cube_kociemba4_reduce_cpp <- function(state, max_depth1 = 10L, max_depth2 = 12L, max_depth3 = 14L, node_budget = 5e7, progress_every = 0, prune_depth_bonus = 0L) {
+    .Call(`_cayleyR_cube_kociemba4_reduce_cpp`, state, max_depth1, max_depth2, max_depth3, node_budget, progress_every, prune_depth_bonus)
+}
+
+cube_kociemba4_last_cpp <- function() {
+    .Call(`_cayleyR_cube_kociemba4_last_cpp`)
+}
+
+cube_kociemba4_tables_cpp <- function() {
+    .Call(`_cayleyR_cube_kociemba4_tables_cpp`)
+}
+
+cube_at_phase_goal_cpp <- function(state, phase) {
+    .Call(`_cayleyR_cube_at_phase_goal_cpp`, state, phase)
+}
+
+cube_kociemba4_set_table_size_cpp <- function(slots) {
+    .Call(`_cayleyR_cube_kociemba4_set_table_size_cpp`, slots)
+}
+
+cube_kociemba4_save_phase3_cpp <- function(path) {
+    .Call(`_cayleyR_cube_kociemba4_save_phase3_cpp`, path)
+}
+
+cube_kociemba4_load_phase3_cpp <- function(path) {
+    .Call(`_cayleyR_cube_kociemba4_load_phase3_cpp`, path)
+}
+
+cube_kociemba4_save_phase_cpp <- function(path, phase) {
+    .Call(`_cayleyR_cube_kociemba4_save_phase_cpp`, path, phase)
+}
+
+cube_kociemba4_load_phase_cpp <- function(path, phase) {
+    .Call(`_cayleyR_cube_kociemba4_load_phase_cpp`, path, phase)
+}
+
+cube_kociemba4_fill_phase_cpp <- function(depth, phase, table_size = 0, breadth_first = TRUE, max_frontier = 40e6) {
+    .Call(`_cayleyR_cube_kociemba4_fill_phase_cpp`, depth, phase, table_size, breadth_first, max_frontier)
+}
+
+cube_kociemba4_fill_phase3_cpp <- function(depth, table_size = 0, breadth_first = TRUE, max_frontier = 40e6) {
+    .Call(`_cayleyR_cube_kociemba4_fill_phase3_cpp`, depth, table_size, breadth_first, max_frontier)
+}
+
+cube_kociemba4_phase3_cpp <- function(state, max_depth3 = 14L, node_budget = 5e7, prune_depth_bonus = 0L, use_exact_centres = FALSE, progress_every = 0) {
+    .Call(`_cayleyR_cube_kociemba4_phase3_cpp`, state, max_depth3, node_budget, prune_depth_bonus, use_exact_centres, progress_every)
+}
+
+cube_phase_generators_cpp <- function(phase) {
+    .Call(`_cayleyR_cube_phase_generators_cpp`, phase)
+}
+
+cube_to_pieces4_cpp <- function(state) {
+    .Call(`_cayleyR_cube_to_pieces4_cpp`, state)
+}
+
+cube_phase3_coord_cpp <- function(state) {
+    .Call(`_cayleyR_cube_phase3_coord_cpp`, state)
+}
+
+cube_wing_parities_cpp <- function(state) {
+    .Call(`_cayleyR_cube_wing_parities_cpp`, state)
+}
+
+cube_phase_goal_keys_cpp <- function(phase) {
+    .Call(`_cayleyR_cube_phase_goal_keys_cpp`, phase)
+}
+
+cube_is_reduced_cpp <- function(state) {
+    .Call(`_cayleyR_cube_is_reduced_cpp`, state)
+}
+
+cube_fsm_size_cpp <- function(n) {
+    .Call(`_cayleyR_cube_fsm_size_cpp`, n)
+}
+
+cube_kociemba4_phase12_cpp <- function(state, upto_phase = 2L, max_depth1 = 10L, max_depth2 = 12L, node_budget = 5e7) {
+    .Call(`_cayleyR_cube_kociemba4_phase12_cpp`, state, upto_phase, max_depth1, max_depth2, node_budget)
+}
+
+cube_kociemba4_phase2_solutions_cpp <- function(state, n_solutions = 4L, max_depth1 = 10L, max_depth2 = 12L, node_budget = 5e7) {
+    .Call(`_cayleyR_cube_kociemba4_phase2_solutions_cpp`, state, n_solutions, max_depth1, max_depth2, node_budget)
+}
+
+cube_wing_geometry_cpp <- function() {
+    .Call(`_cayleyR_cube_wing_geometry_cpp`)
+}
+
+perm_group_create_table_cpp <- function(state_length, move_names, move_perms) {
+    .Call(`_cayleyR_perm_group_create_table_cpp`, state_length, move_names, move_perms)
+}
+
+perm_group_create_topspin_cpp <- function(state_length, k, move_names) {
+    .Call(`_cayleyR_perm_group_create_topspin_cpp`, state_length, k, move_names)
+}
+
+perm_group_info_cpp <- function(group) {
+    .Call(`_cayleyR_perm_group_info_cpp`, group)
+}
+
+perm_group_apply_cpp <- function(group, state, word) {
+    .Call(`_cayleyR_perm_group_apply_cpp`, group, state, word)
+}
+
+perm_group_compose_cpp <- function(group, word) {
+    .Call(`_cayleyR_perm_group_compose_cpp`, group, word)
+}
+
+perm_group_inverse_seq_cpp <- function(group, word) {
+    .Call(`_cayleyR_perm_group_inverse_seq_cpp`, group, word)
+}
+
+perm_group_identity_cpp <- function(group) {
+    .Call(`_cayleyR_perm_group_identity_cpp`, group)
+}
+
+short_path_bfs_cpp <- function(start_state, path, group, moves, depth) {
+    .Call(`_cayleyR_short_path_bfs_cpp`, start_state, path, group, moves, depth)
+}
+
+sparse_bfs_cpp <- function(start_state, group, moves, n_hubs = 7L, n_random = 3L, max_levels = 1000L) {
+    .Call(`_cayleyR_sparse_bfs_cpp`, start_state, group, moves, n_hubs, n_random, max_levels)
+}
+
+state_store_create <- function(perm_length, init_capacity = 10000L, group = NULL) {
+    .Call(`_cayleyR_state_store_create`, perm_length, init_capacity, group)
 }
 
 state_store_size <- function(xp) {
@@ -173,7 +622,7 @@ state_store_reconstruct_path <- function(xp, bridge_states_mat, target_state_vec
     .Call(`_cayleyR_state_store_reconstruct_path`, xp, bridge_states_mat, target_state_vec, target_cycle, target_combo)
 }
 
-analyze_combos_to_store_cpp <- function(xp, combinations, start_state, k, cycle_val) {
-    .Call(`_cayleyR_analyze_combos_to_store_cpp`, xp, combinations, start_state, k, cycle_val)
+analyze_combos_to_store_cpp <- function(xp, combinations, start_state, group, cycle_val, max_reps = 100000L) {
+    .Call(`_cayleyR_analyze_combos_to_store_cpp`, xp, combinations, start_state, group, cycle_val, max_reps)
 }
 
