@@ -76,15 +76,6 @@ best --- which is the same trade the weight makes, and the reason a very wide
 batch can lengthen solutions.
 }
 
-\examples{
-\donttest{
-g   <- cube_group(3)
-net <- cube_adi_model(g, arch = "resnet")
-net <- cube_adi_train(net, iterations = 200L, max_depth = 12L)
-s   <- group_identity(g)
-res <- cube_adi_astar(net, s, weight = 0.6, batch = 500L)
-}
-}
 \seealso{
 \code{\link{cube_adi_solve}} for the greedy walk
 }

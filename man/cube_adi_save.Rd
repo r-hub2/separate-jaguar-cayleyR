@@ -26,12 +26,6 @@ performs, read back by applying the move to the identity. Loading replays
 those through \code{\link{perm_group}} and gets the same group, so the saved
 network does not depend on the function that happened to build it.
 }
-\examples{
-\dontrun{
-net <- cube_adi_train(cube_adi_model(cube_group(3)), iterations = 10L)
-cube_adi_save(net, "~/cube3_transformer")
-}
-}
 \seealso{
 \code{\link{cube_adi_load}}
 }

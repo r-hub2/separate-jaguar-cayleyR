@@ -55,10 +55,3 @@ The network, with \code{$history} recording loss per iteration
 \description{
 Train Value and Policy by Autodidactic Iteration
 }
-\examples{
-\donttest{
-g   <- cube_group(4)
-net <- cube_adi_model(g)
-net <- cube_adi_train(net, iterations = 50L, batch_states = 5000L)
-}
-}

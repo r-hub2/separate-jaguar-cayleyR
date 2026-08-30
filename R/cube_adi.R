@@ -236,17 +236,6 @@ adi_input_head <- function(state_len, embed_dim, layout) {
 #' @param backend \code{"auto"}, \code{"cpu"} or \code{"vulkan"}
 #' @return List with \code{value} and \code{policy} models, plus the group
 #' @export
-#' @examples
-#' \donttest{
-#' g   <- cube_group(4)
-#' net <- cube_adi_model(g, embed_dim = 16L, hidden = c(512L, 512L))
-#'
-#' # A transformer over the 20 pieces of a 3x3x3.
-#' g3  <- cube_group(3, moves = c("U", "U'", "R", "R'", "F", "F'",
-#'                                "D", "D'", "L", "L'", "B", "B'"))
-#' tf  <- cube_adi_model(g3, arch = "transformer", encoding = "piece",
-#'                       d_model = 64L, n_heads = 4L, n_blocks = 3L)
-#' }
 cube_adi_model <- function(group, embed_dim = 32L, hidden = c(1024L, 512L),
                            arch = c("mlp", "resnet", "lstm", "gru",
                                     "transformer"),
@@ -470,12 +459,6 @@ adi_policy_of <- function(model, states, batch_size, n_moves, arch = "mlp",
 #' @param verbose \code{TRUE} to report each iteration
 #' @return The network, with \code{$history} recording loss per iteration
 #' @export
-#' @examples
-#' \donttest{
-#' g   <- cube_group(4)
-#' net <- cube_adi_model(g)
-#' net <- cube_adi_train(net, iterations = 50L, batch_states = 5000L)
-#' }
 cube_adi_train <- function(net, iterations = 100L, batch_states = 10000L,
                            max_depth = 20L, epochs = 1L, batch_size = 256L,
                            loss_thresh = 0.5, refresh_every = NULL,
@@ -621,11 +604,6 @@ cube_adi_solve <- function(net, state, budget = 200L, use_policy = TRUE,
 #' @param path Directory to write into; created if absent
 #' @return \code{path}, invisibly
 #' @seealso \code{\link{cube_adi_load}}
-#' @examples
-#' \dontrun{
-#' net <- cube_adi_train(cube_adi_model(cube_group(3)), iterations = 10L)
-#' cube_adi_save(net, "~/cube3_transformer")
-#' }
 #' @export
 cube_adi_save <- function(net, path) {
   adi_require_ggml()
@@ -668,11 +646,6 @@ cube_adi_save <- function(net, path) {
 #'   or \code{"auto"}
 #' @return A \code{cube_adi_net}
 #' @seealso \code{\link{cube_adi_save}}
-#' @examples
-#' \dontrun{
-#' net <- cube_adi_load("~/cube3_transformer")
-#' cube_adi_solve(net, scrambled_state)
-#' }
 #' @export
 cube_adi_load <- function(path, backend = "auto") {
   adi_require_ggml()

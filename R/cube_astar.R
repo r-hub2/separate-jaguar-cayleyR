@@ -47,14 +47,6 @@
 #'   \code{nodes} (expanded) and \code{iterations}
 #' @seealso \code{\link{cube_adi_solve}} for the greedy walk
 #' @export
-#' @examples
-#' \donttest{
-#' g   <- cube_group(3)
-#' net <- cube_adi_model(g, arch = "resnet")
-#' net <- cube_adi_train(net, iterations = 200L, max_depth = 12L)
-#' s   <- group_identity(g)
-#' res <- cube_adi_astar(net, s, weight = 0.6, batch = 500L)
-#' }
 cube_adi_astar <- function(net, state, weight = 0.6, batch = 1000L,
                            max_nodes = 1e6, batch_size = 256L,
                            verbose = FALSE) {

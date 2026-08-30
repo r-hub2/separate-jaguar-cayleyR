@@ -20,12 +20,6 @@ Inverse of \code{\link{cube_adi_save}}. The group is rebuilt from the saved
 permutations, so the result is usable by \code{\link{cube_adi_solve}} and
 \code{\link{cube_adi_train}} without any of the code that first created it.
 }
-\examples{
-\dontrun{
-net <- cube_adi_load("~/cube3_transformer")
-cube_adi_solve(net, scrambled_state)
-}
-}
 \seealso{
 \code{\link{cube_adi_save}}
 }

@@ -71,15 +71,3 @@ a shared-in-shape, separate-in-weights embedding, then a stack of dense
 layers. The value network ends in one linear unit (a distance), the policy
 network in one softmax unit per move.
 }
-\examples{
-\donttest{
-g   <- cube_group(4)
-net <- cube_adi_model(g, embed_dim = 16L, hidden = c(512L, 512L))
-
-# A transformer over the 20 pieces of a 3x3x3.
-g3  <- cube_group(3, moves = c("U", "U'", "R", "R'", "F", "F'",
-                               "D", "D'", "L", "L'", "B", "B'"))
-tf  <- cube_adi_model(g3, arch = "transformer", encoding = "piece",
-                      d_model = 64L, n_heads = 4L, n_blocks = 3L)
-}
-}
