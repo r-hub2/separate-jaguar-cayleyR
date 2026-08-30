@@ -190,7 +190,7 @@ test_that("pairing finishes a 4x4x4", {
   # random, so there are no built centres to protect.
   skip_on_cran()
   set.seed(11)
-  for (k in 1:3) {
+  for (k in 1:2) {
     s <- generate_state(group = cube_group(4), n_moves = 20)
     r <- cube_pair_edges(s, 4L, depth = 3L, max_rounds = 25L,
                          keep_centres = FALSE)

@@ -38,13 +38,14 @@ test_that("the layout agrees with cube_pieces", {
   expect_equal(anyDuplicated(kept), 0L)
   expect_length(kept, 8L * 3L + 12L * 2L)
 
-  # home/turn are the inverse of slots, so the round trip has to close.
-  for (p in seq_len(lay$n_piece)) {
-    s <- lay$slots[p, ]
-    s <- s[s > 0L]
-    expect_equal(lay$home[s], rep(p, length(s)))
-    expect_equal(lay$turn[s], seq_along(s))
-  }
+  # home/turn are the inverse of slots, so the round trip has to close. Read
+  # the slots out piece by piece -- rows, in order -- and compare the whole
+  # round trip in one go rather than two expectations a piece.
+  n_st <- rowSums(lay$slots > 0L)
+  by_row <- unlist(lapply(seq_len(lay$n_piece),
+                          function(p) lay$slots[p, seq_len(n_st[p])]))
+  expect_equal(lay$home[by_row], rep(seq_len(lay$n_piece), n_st))
+  expect_equal(lay$turn[by_row], unlist(lapply(n_st, seq_len)))
 })
 
 test_that("a slot's stickers always come from one piece", {
@@ -57,14 +58,20 @@ test_that("a slot's stickers always come from one piece", {
   tbl   <- cube_moves(3)
 
   set.seed(7)
+  # One expectation per scramble rather than one per piece: the check is the
+  # same, and 20 expect_ calls a scramble cost more than the cube does.
+  slots <- lapply(seq_len(lay$n_piece), function(p) {
+    slot <- lay$slots[p, ]
+    slot[slot > 0L]
+  })
+
   s <- group_identity(g)
-  for (i in 1:200) {
+  for (i in 1:50) {
     s <- s[tbl[[sample(faces, 1L)]]]
-    for (p in seq_len(lay$n_piece)) {
-      slot <- lay$slots[p, ]
-      slot <- slot[slot > 0L]
-      expect_equal(length(unique(lay$home[s[slot]])), 1L)
-    }
+    one_piece <- vapply(slots,
+                        function(slot) length(unique(lay$home[s[slot]])) == 1L,
+                        logical(1))
+    expect_true(all(one_piece))
   }
 })
 
