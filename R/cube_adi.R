@@ -50,6 +50,28 @@ adi_require_ggml <- function() {
   invisible(TRUE)
 }
 
+# The transformer needs three layers that arrived in ggmlR 0.8.5, and 0.8.4 is
+# what is on CRAN as this is written. Naming them as ggmlR::ggml_layer_... is
+# what one would rather write, but R CMD check resolves every such reference
+# against the installed ggmlR and reports the three as missing objects -- a
+# WARNING on a machine that has 0.8.4, for code that is only reached if the
+# caller asks for arch = "transformer".
+#
+# Looking them up by name defers the question to the call, which is where it
+# belongs: the other five architectures do not need these layers and go on
+# working under 0.8.4. Once 0.8.5 is the version on CRAN this can go back to
+# being three ordinary ggmlR:: calls, and the DESCRIPTION can say
+# ggmlR (>= 0.8.5) instead.
+adi_ggml_fun <- function(name) {
+  if (!exists(name, envir = asNamespace("ggmlR"), inherits = FALSE)) {
+    stop("cube_adi_model(arch = \"transformer\") needs ggmlR 0.8.5 or newer",
+         " -- this is ", as.character(packageVersion("ggmlR")), ".\n",
+         "  The other architectures (mlp, resnet, lstm, gru) work as they are.",
+         call. = FALSE)
+  }
+  getExportedValue("ggmlR", name)
+}
+
 # A state is a permutation of 1..96, and how it is handed to a network depends
 # on how that network reads it. The embedding wants token ids, zero-based
 # because that is what ggml_get_rows indexes with. The recurrent variant has no
@@ -343,9 +365,9 @@ cube_adi_model <- function(group, embed_dim = 32L, hidden = c(1024L, 512L),
       # twisted DBL. A learned table rather than rope, because rope encodes
       # relative position and the distance between slots 3 and 7 means nothing
       # on a cube -- adjacency here is geometric, not linear.
-      h <- ggmlR::ggml_layer_positional_embedding(h)
+      h <- adi_ggml_fun("ggml_layer_positional_embedding")(h)
       for (b in seq_len(n_blocks)) {
-        h <- ggmlR::ggml_layer_transformer_block(
+        h <- adi_ggml_fun("ggml_layer_transformer_block")(
           h, d_model, n_heads = n_heads,
           ff_dim = if (is.null(ff_dim)) 4L * d_model else ff_dim,
           # Not gelu: it has no backward rule in ggml, so the graph builds and
@@ -356,7 +378,7 @@ cube_adi_model <- function(group, embed_dim = 32L, hidden = c(1024L, 512L),
       # Mean over the pieces, not flatten: there is no summary token and all
       # twenty pieces count equally, and pooling makes the head's width
       # d_model instead of n_piece * d_model.
-      h   <- ggmlR::ggml_layer_sequence_pooling(h, mode = "mean")
+      h   <- adi_ggml_fun("ggml_layer_sequence_pooling")(h, mode = "mean")
       out <- ggmlR::ggml_layer_dense(h, units, activation = activation)
       ggmlR::ggml_model(inputs = inp, outputs = out)
     }
