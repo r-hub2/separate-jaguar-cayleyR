@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>The 4x4x4 Cube</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">The 4x4x4 Cube</h1>
+
+
+
+<p>The 4x4x4 is built by the same rules as the 3x3x3 (see
+<code>vignette(&quot;rubiks-cube&quot;)</code>): 96 stickers, 24 quarter turns.
+Two things are new. The cube has no fixed centres, and each edge is made
+of two separate pieces, called wings. That is why it is solved by
+<strong>reduction</strong>.</p>
+<div id="moves" class="section level2">
+<h2>Moves</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>cg4 <span class="ot">&lt;-</span> <span class="fu">cube_group</span>(<span class="dv">4</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>cg4</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co">#&gt; &lt;perm_group&gt; cube4x4x4</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co">#&gt;   state length: 96</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt;   moves (24): U U&#39; R R&#39; F F&#39; D D&#39; L L&#39; B B&#39; 1x 1x&#39; 1y 1y&#39; 1z 1z&#39; 2x 2x&#39; 2y 2y&#39; 2z 2z&#39;</span></span></code></pre></div>
+<p>The outer layers keep their usual letters. The two inner layers of
+each axis have no standard names, so they are written as layer index and
+axis: <code>&quot;2x&quot;</code> is layer 2 along x.</p>
+</div>
+<div id="reduction" class="section level2">
+<h2>Reduction</h2>
+<p>A cube is <strong>reduced</strong> when:</p>
+<ul>
+<li>the four centres of every face are the same colour, so each face
+acts as one;</li>
+<li>the two wings of every edge are together, so each edge acts as
+one.</li>
+</ul>
+<p>A reduced 4x4x4 is a 3x3x3 with fat pieces, and any 3x3x3 method can
+finish it. <code>cube_is_reduced()</code> checks the first part only,
+not where the pieces are. A solved cube turned by <code>U</code> is
+still reduced:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">cube_is_reduced</span>(<span class="fu">cube_identity</span>(<span class="dv">4</span>))</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">cube_is_reduced</span>(<span class="fu">group_apply</span>(cg4, <span class="fu">cube_identity</span>(<span class="dv">4</span>), <span class="st">&quot;U&quot;</span>))</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="fu">cube_is_reduced</span>(<span class="fu">group_apply</span>(cg4, <span class="fu">cube_identity</span>(<span class="dv">4</span>), <span class="st">&quot;2x&quot;</span>))</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+</div>
+<div id="cube_solve4-always-finishes" class="section level2">
+<h2><code>cube_solve4()</code>: always finishes</h2>
+<p>This solver builds the centres, pairs the edges, and finishes the
+cube with a 3x3x3 method. There is no search, so it always gets there,
+but the solutions are long: a few hundred quarter turns.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>scramble <span class="ot">&lt;-</span> <span class="fu">generate_state</span>(<span class="at">group =</span> cg4, <span class="at">n_moves =</span> <span class="dv">40</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">cube_solve4</span>(scramble)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>res<span class="sc">$</span>found</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="fu">length</span>(res<span class="sc">$</span>path)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; [1] 260</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>res<span class="sc">$</span>stages</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt;        name            detail n_moves</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; 1 reduction centres and edges     145</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; 2     3x3x3              cfop     115</span></span></code></pre></div>
+<p>Two things can happen on a 4x4x4 that are impossible on a 3x3x3: OLL
+and PLL <strong>parity</strong>. After reduction the last layer can be
+in a state no 3x3x3 can reach. The solver repairs it with algorithms
+that turn the inner layers, and the repair shows up as its own
+stage.</p>
+<p>Some options make the solution shorter:</p>
+<ul>
+<li><code>method</code> picks the 3x3x3 solver for the end:
+<code>&quot;cfop&quot;</code> (the default), <code>&quot;kociemba&quot;</code>,
+<code>&quot;lbl&quot;</code>, <code>&quot;m2&quot;</code>, <code>&quot;pochmann&quot;</code>.
+<code>&quot;kociemba&quot;</code> gives the shortest finish.</li>
+<li><code>orientations</code> tries several ways of holding the cube and
+keeps the shortest answer. Eight is a good trade: about 11% shorter for
+a fifth more time.</li>
+</ul>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>res_k <span class="ot">&lt;-</span> <span class="fu">cube_solve4</span>(scramble, <span class="at">method =</span> <span class="st">&quot;kociemba&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">length</span>(res_k<span class="sc">$</span>path)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; [1] 188</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">cube_is_colour_solved</span>(<span class="fu">group_apply</span>(cg4, scramble, res_k<span class="sc">$</span>path))</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+</div>
+<div id="cube_kociemba4-short-but-not-always" class="section level2">
+<h2><code>cube_kociemba4()</code>: short, but not always</h2>
+<p>A four-phase search after Kociemba. Phases 1–3 search for a
+reduction, and phase 4 hands the reduced cube to
+<code>cube_kociemba()</code>. The solutions are a few dozen moves long
+instead of a few hundred.</p>
+<p>The catch is phase 3: its search grows about fifteen-fold per level.
+Scrambles of five moves reduce reliably; from seven moves on, the search
+usually runs out of budget. In that case <code>found</code> is
+<code>FALSE</code>, and <code>cube_kociemba4_report()</code> tells you
+which phase stopped.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>short <span class="ot">&lt;-</span> <span class="fu">generate_state</span>(<span class="at">group =</span> cg4, <span class="at">n_moves =</span> <span class="dv">5</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>res4 <span class="ot">&lt;-</span> <span class="fu">cube_kociemba4</span>(short)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>res4<span class="sc">$</span>found</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="fu">length</span>(res4<span class="sc">$</span>reduction)   <span class="co"># moves to the reduced cube</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; [1] 5</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="fu">length</span>(res4<span class="sc">$</span>cube3)       <span class="co"># moves to finish it as a 3x3x3</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; [1] 4</span></span></code></pre></div>
+</div>
+<div id="cube_solve4_cascade-the-best-of-both" class="section level2">
+<h2><code>cube_solve4_cascade()</code>: the best of both</h2>
+<p>The cascade tries the search first and falls back to
+<code>cube_solve4()</code> when the search does not pay off. It tries
+several orientations of the cube at a small node budget, then a larger
+one. If nothing reduces the cube, <code>cube_solve4()</code> finishes
+it. You always get an answer: short when the search succeeds, long
+otherwise.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>r <span class="ot">&lt;-</span> <span class="fu">cube_solve4_cascade</span>(scramble)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>r<span class="sc">$</span>method      <span class="co"># &quot;reduce&quot; if the search won, &quot;solve4&quot; if it fell back</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>r<span class="sc">$</span>n_moves</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>r<span class="sc">$</span>ops         <span class="co"># every step it took, with the time spent on each</span></span></code></pre></div>
+<p>This one takes seconds to minutes per cube, so it is not run
+here.</p>
+</div>
+<div id="santa-2023-notation" class="section level2">
+<h2>Santa 2023 notation</h2>
+<p>The Kaggle Santa 2023 puzzles write cube moves as <code>f0</code>,
+<code>r1</code>, <code>-d2</code>: an axis letter, a layer index, and a
+minus sign for the inverse. This is the same alphabet as the package’s,
+under different names. <code>cube_santa_path()</code> and
+<code>cube_santa_path_out()</code> convert paths between the two
+notations, and <code>cube_santa_state()</code> and
+<code>cube_santa_state_out()</code> convert states:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">cube_santa_path</span>(<span class="st">&quot;f0.-d3.r1&quot;</span>, <span class="at">n =</span> <span class="dv">4</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; [1] &quot;F&quot;  &quot;U&quot;  &quot;2x&quot;</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">cube_santa_path_out</span>(<span class="fu">c</span>(<span class="st">&quot;F&quot;</span>, <span class="st">&quot;U&quot;</span>, <span class="st">&quot;2x&quot;</span>), <span class="at">n =</span> <span class="dv">4</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; [1] &quot;f0.-d3.r1&quot;</span></span></code></pre></div>
+<p>So a solution from any solver here can be written out in Santa’s
+format:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">substr</span>(<span class="fu">cube_santa_path_out</span>(res_k<span class="sc">$</span>path, <span class="at">n =</span> <span class="dv">4</span>), <span class="dv">1</span>, <span class="dv">60</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt; [1] &quot;-f3.-f3.-d2.-d2.r2.f3.-d2.-d2.r2.r2.r2.f1.f2.d0.r3.r3.f2.-r3&quot;</span></span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

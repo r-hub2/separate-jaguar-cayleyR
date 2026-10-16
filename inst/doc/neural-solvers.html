@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Neural Solvers</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Neural Solvers</h1>
+
+
+
+<p>A neural network can learn to solve the cube without ever being shown
+a solution. It learns the <strong>distance to solved</strong>: how many
+moves a state needs. A solver then picks, at every step, the move that
+brings the cube closest to solved.</p>
+<p>The networks need the <strong>ggmlR</strong> package. They run on the
+CPU, or on a GPU through Vulkan when one is available. Training takes
+from minutes to hours, so most of the code below is shown but not
+run.</p>
+<div id="training-data-generate_walk" class="section level2">
+<h2>Training data: <code>generate_walk()</code></h2>
+<p>Every example starts with random walks away from the solved cube.
+<code>generate_walk()</code> returns each walk together with the moves
+it took, so the way back is known in advance. That makes it useful both
+for training and for checking a solver against a known answer.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>g <span class="ot">&lt;-</span> <span class="fu">cube_group</span>(<span class="dv">3</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>w <span class="ot">&lt;-</span> <span class="fu">generate_walk</span>(g, <span class="at">n =</span> <span class="dv">3</span>, <span class="at">n_moves =</span> <span class="dv">6</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>w<span class="sc">$</span>moves[[<span class="dv">1</span>]]</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt; [1] &quot;F&quot;  &quot;D&quot;  &quot;B&quot;  &quot;S&quot;  &quot;R&#39;&quot; &quot;S&quot;</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>w<span class="sc">$</span>solution[[<span class="dv">1</span>]]</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt; [1] &quot;S&#39;&quot; &quot;R&quot;  &quot;S&#39;&quot; &quot;B&#39;&quot; &quot;D&#39;&quot; &quot;F&#39;&quot;</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co"># the solution really does solve the state</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="fu">identical</span>(<span class="fu">group_apply</span>(g, w<span class="sc">$</span>states[<span class="dv">1</span>, ], w<span class="sc">$</span>solution[[<span class="dv">1</span>]]), <span class="fu">group_identity</span>(g))</span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>A walk’s length is only an upper bound on the true distance, because
+a shorter way back may exist. Two options make the bound tighter:
+<code>no_undo</code> (on by default) refuses a move that undoes the one
+before, and <code>no_cancel</code> also refuses moves like
+<code>U D U&#39;</code>, which walk three moves and travel one.</p>
+<p>For training, <code>exact = FALSE</code> draws walk lengths
+uniformly, so every depth is equally represented:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">generate_walk</span>(g, <span class="at">n =</span> <span class="dv">8</span>, <span class="at">n_moves =</span> <span class="dv">10</span>, <span class="at">exact =</span> <span class="cn">FALSE</span>)<span class="sc">$</span>depth</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&gt; [1] 4 2 1 9 8 5 1 4</span></span></code></pre></div>
+</div>
+<div id="learning-without-labels-autodidactic-iteration" class="section level2">
+<h2>Learning without labels: autodidactic iteration</h2>
+<p>The obvious label for a scrambled state is the length of the
+scramble. That label is wrong, because a scramble of 15 moves may be
+solvable in 12. Autodidactic iteration (ADI, from DeepCubeA) avoids the
+problem. The target of a state is</p>
+<pre><code>1 + the smallest value the network gives to any of its children</code></pre>
+<p>and a solved child counts as exactly 0. States one move from solved
+get exact targets right away, their neighbours learn from them, and
+correctness spreads outward as training goes on.</p>
+<div id="build-the-networks" class="section level3">
+<h3>Build the networks</h3>
+<p><code>cube_adi_model()</code> builds two networks over the same
+input. The <strong>value</strong> network estimates the distance; the
+<strong>policy</strong> network estimates which move is best.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>net <span class="ot">&lt;-</span> <span class="fu">cube_adi_model</span>(g, <span class="at">arch =</span> <span class="st">&quot;resnet&quot;</span>, <span class="at">encoding =</span> <span class="st">&quot;piece&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>net</span></code></pre></div>
+<p>The main choices are:</p>
+<ul>
+<li><code>arch</code>: <code>&quot;mlp&quot;</code> (the default),
+<code>&quot;resnet&quot;</code> (the shape DeepCubeA uses),
+<code>&quot;transformer&quot;</code> (needs ggmlR 0.8.5 or newer), and
+<code>&quot;lstm&quot;</code> / <code>&quot;gru&quot;</code> for comparison.</li>
+<li><code>encoding</code>: <code>&quot;sticker&quot;</code> reads the 54 stickers;
+<code>&quot;piece&quot;</code> reads which piece sits in each slot and how it is
+turned, as DeepCubeA does.</li>
+<li><code>backend</code>: <code>&quot;auto&quot;</code>, <code>&quot;cpu&quot;</code> or
+<code>&quot;vulkan&quot;</code>.</li>
+</ul>
+</div>
+<div id="train" class="section level3">
+<h3>Train</h3>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>net <span class="ot">&lt;-</span> <span class="fu">cube_adi_train</span>(net, <span class="at">iterations =</span> <span class="dv">200</span>, <span class="at">batch_states =</span> <span class="dv">10000</span>,</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>                      <span class="at">max_depth =</span> <span class="dv">20</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">tail</span>(net<span class="sc">$</span>history)</span></code></pre></div>
+<p>Each iteration draws fresh scrambles, computes their targets with a
+frozen copy of the value network, and fits both networks. The copy is
+refreshed when the loss falls below <code>loss_thresh</code>, or every
+<code>refresh_every</code> iterations if you set that.</p>
+<p>In the printed log, watch the <strong>mean target</strong>: it should
+rise as correctness spreads. If it stalls near 1, the frozen copy is not
+being refreshed. Raise <code>loss_thresh</code> or set
+<code>refresh_every</code>.</p>
+</div>
+<div id="save-load-train-further" class="section level3">
+<h3>Save, load, train further</h3>
+<p>A trained network is saved to a directory and loaded back with
+everything it needs, including its group. A loaded network can be
+trained further: <code>cube_adi_train()</code> simply continues from its
+weights.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">cube_adi_save</span>(net, <span class="st">&quot;adi_cube3&quot;</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>net <span class="ot">&lt;-</span> <span class="fu">cube_adi_load</span>(<span class="st">&quot;adi_cube3&quot;</span>, <span class="at">backend =</span> <span class="st">&quot;cpu&quot;</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>net <span class="ot">&lt;-</span> <span class="fu">cube_adi_train</span>(net, <span class="at">iterations =</span> <span class="dv">100</span>)   <span class="co"># carries on training</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="fu">cube_adi_save</span>(net, <span class="st">&quot;adi_cube3&quot;</span>)</span></code></pre></div>
+</div>
+</div>
+<div id="solving" class="section level2">
+<h2>Solving</h2>
+<p>There are two ways to use a trained network.</p>
+<p><strong>Greedy:</strong> <code>cube_adi_solve()</code> takes the
+best-looking move at every step. It never revisits a state, but it never
+reconsiders a choice either. It is fast, and works well near solved,
+where the network is accurate.</p>
+<p><strong>A* search:</strong> <code>cube_adi_astar()</code> keeps the
+moves it passed over and returns to them when the chosen branch stops
+paying. A wrong estimate then costs time rather than the solve.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">7</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">generate_walk</span>(g, <span class="at">n =</span> <span class="dv">1</span>, <span class="at">n_moves =</span> <span class="dv">15</span>)<span class="sc">$</span>states[<span class="dv">1</span>, ]</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>greedy <span class="ot">&lt;-</span> <span class="fu">cube_adi_solve</span>(net, s, <span class="at">budget =</span> <span class="dv">200</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>greedy<span class="sc">$</span>solved</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="fu">length</span>(greedy<span class="sc">$</span>path)</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>astar <span class="ot">&lt;-</span> <span class="fu">cube_adi_astar</span>(net, s, <span class="at">weight =</span> <span class="fl">0.6</span>, <span class="at">batch =</span> <span class="dv">1000</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>astar<span class="sc">$</span>solved</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>astar<span class="sc">$</span>length</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>astar<span class="sc">$</span>nodes      <span class="co"># states expanded</span></span></code></pre></div>
+<p>A* orders states by
+<code>weight * moves_so_far + estimated_distance</code>.</p>
+<ul>
+<li><code>weight = 1</code> is classic A*: shorter paths, much
+slower.</li>
+<li><code>weight = 0</code> is pure greedy best-first.</li>
+<li>0.6 is DeepCubeA’s choice and the default.</li>
+</ul>
+<p><code>batch</code> expands that many states per step and scores all
+their children in one call. This keeps a GPU busy, but a very large
+batch can make solutions longer.</p>
+</div>
+<div id="measuring-a-solver" class="section level2">
+<h2>Measuring a solver</h2>
+<p>Because <code>generate_walk()</code> knows the way back, it is easy
+to see how a solver behaves as the scramble gets deeper:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>depths <span class="ot">&lt;-</span> <span class="dv">4</span><span class="sc">:</span><span class="dv">16</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>rate <span class="ot">&lt;-</span> <span class="fu">sapply</span>(depths, <span class="cf">function</span>(d) {</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  w <span class="ot">&lt;-</span> <span class="fu">generate_walk</span>(g, <span class="at">n =</span> <span class="dv">50</span>, <span class="at">n_moves =</span> d, <span class="at">no_cancel =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="fu">mean</span>(<span class="fu">apply</span>(w<span class="sc">$</span>states, <span class="dv">1</span>, <span class="cf">function</span>(s) <span class="fu">cube_adi_solve</span>(net, s)<span class="sc">$</span>solved))</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>})</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="fu">data.frame</span>(<span class="at">depth =</span> depths, <span class="at">solved =</span> rate)</span></code></pre></div>
+</div>
+<div id="q-models-the-example-scripts" class="section level2">
+<h2>Q-models: the example scripts</h2>
+<p>The package also ships scripts for a different kind of network, a
+<strong>Q-model</strong>. A Q-model scores all 18 moves of a state at
+once instead of one distance per state. It is trained on
+<code>generate_walk(pivot = TRUE)</code>: a point in the middle of a
+walk, plus the two moves whose value is known there, the move back and
+the move forward.</p>
+<ul>
+<li><p><code>inst/examples/train_cube3_q_online.R</code> trains a
+transformer Q-model on fresh walks at every step, so no state is seen
+twice. It saves checkpoints with <code>ckpt=</code>, continues an
+interrupted run with <code>resume=</code>, and trains a saved model
+further with <code>init=</code>:</p>
+<pre><code>Rscript inst/examples/train_cube3_q_online.R steps=20000 ckpt=1000
+Rscript inst/examples/train_cube3_q_online.R init=&lt;model dir&gt; depth=16 steps=8000 lr=5e-4</code></pre></li>
+<li><p><code>inst/examples/diag_cube3_q.R</code> takes a model and
+solves scrambles of falling depth, greedily and by beam search side by
+side. That shows at which depth the model starts to fail.</p></li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
