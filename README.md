@@ -643,6 +643,116 @@ Cutting across cycles pays off on small rings and thins out as the state space
 grows: a random cycle leaving the path rarely meets it again when there is that
 much room to wander. See TODO for what this needs.
 
+### Q-model on the 3x3x3 (`inst/examples/train_cube3_q_online.R`)
+
+A transformer with eighteen outputs, one per move, trained on fresh midpoint
+walks (`generate_walk(pivot = TRUE)`, depth 11, batch 512, nothing repeated),
+through one `ggmlR::ggml_trainer` for the whole run. Same seed, model 512 /
+8 heads / 4 blocks / ff 1024, RX 9070 over Vulkan, about 0.24 s a step.
+
+| run | steps | pair | top1 | MAE |
+|---|---|---|---|---|
+| `sched=const`, lr 1e-3 throughout | stopped at 7700 | 84–85% | 43–45% | ~0.95 |
+| `sched=cosine`, 500 warm-up, down to 1e-5 | 8000 | **92.8%** | **62.1%** | **0.74** |
+| `sched=const`, model 256 / ff 512 | 4000 | 85.8%* | 45.0%* | 0.99 |
+
+\* scored on 2000 held-out states rather than 4000.
+
+- The cosine schedule wins clearly. The two curves match up to step ~2000 and
+  part once the learning rate falls below ~8e-4; from there every drop in the
+  rate buys pair and top1.
+- The constant run did not reach the model's limit. At 1e-3 it kept shaking
+  around a plateau from step ~4500 on: the plateau was the schedule's, not the
+  model's.
+- Under the constant schedule the 512 model was no better than the 256 one.
+
+By depth, for the cosine run (q(prev) should be depth − 1):
+
+| depth | 2 | 4 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|
+| top1 | 86.8% | 78.8% | 62.6% | 54.2% | 48.1% | 38.5% | 31.5% |
+| q(prev) | 1.16 | 3.37 | 5.85 | 6.80 | 7.42 | 8.08 | 8.49 |
+
+q rises by about one a step up to depth 7 and saturates from 8. Part of that is
+the labels: a walk refusing only an immediate undo still lets `U D U'` and
+`U U U` through, so the deep labels overstate the distance. `no_cancel = TRUE`
+in `generate_walk()` refuses those; the runs above were made without it.
+
+In search (`inst/examples/diag_cube3_q.R`, beam 32, 20 walks per depth):
+
+| depth | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17–20 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 256 const, budget 60 | 90% | 75% | 55% | 35% | 30% | 15% | 5% | 5% | 5% | 0–5% |
+| 512 cosine, budget 25 | **100%** | 95% | 85% | 80% | 70% | 55% | 40% | 40% | 30% | 10–15% |
+| 512 cosine, init, depth 16, `no_cancel`, budget 3x depth | 100% | 95% | 90% | 90% | 85% | 75% | 75% | 35% | 35% | 25–40% |
+
+Both solve every cube up to depth 7. The cosine model moves that edge to 8 and
+does not fall to zero past its training depth of 11: 55% at 13, 40% at 15, with
+less than half the move budget. Read the deep end with care: these runs drew
+their walks with `no_undo` only (`diag_cube3_q.R` now uses `no_cancel = 1` by
+default), so their depths are overstated too ---
+the mean solution is 13.2 moves at depth 14 and 14.7 at depth 16. At 17 the mean
+solution (20.3) is longer than the walk: the beam found a way round, not back.
+
+The third row is the cosine model trained on from `qon_cosine8k` for 8000 more
+steps at depth 16 with `no_cancel = TRUE` (pair 89.0%, top1 53.5% on its own
+held-out set), searched on `no_cancel` walks, so its depths are not overstated.
+It holds 75% up to depth 14 and drops to 35% at 15, inside its training depth:
+there q(prev) is already flat (11.95, 12.30, 12.53 at 13, 14, 15). From depth 12
+the solutions are longer than the walk (18.4 moves at 14, 27–31 at 17–18). A
+solve takes under 0.55 s up to depth 14 and about 0.9 s beyond, where the
+failures run to the move cap. The cap is 3x the depth rather than 25, which
+likely accounts for some of the 25–40% at 17–20.
+
+On Vulkan the default multiplies keep f16 tiles, so every q carries a little
+noise. Measured with `diag_cube3_q.R cmp=1` on this model (20 walks, depths
+1–16): q moves by at most 0.004 moves between default and f32 precision, and
+the best move of a frontier state changes in at most 0.08% of states. The
+search therefore runs at the default precision; the training reports and the
+final score use `matmul_precision = "f32"`, so that runs and resumed runs are
+scored on the same numbers. The edge at depth 15 is the model's, not the
+arithmetic's.
+
+A greedy argmin descent falls to 50% by depth 5, mostly by stepping back and
+forth between two states, so it is no longer reported.
+
+#### Continuing from a saved model
+
+`init=<model directory>` loads `model.ggml` and `meta.rds` from an earlier run
+and trains on from there with the same `ggml_trainer`:
+
+```
+Rscript inst/examples/train_cube3_q_online.R init=/mnt/Data2/DS_projects/333/qon_cosine8k \
+  depth=16 steps=8000 warmup=500 lr=5e-4 report=100 sched=cosine
+```
+
+- The architecture (`d_model`, `heads`, `blocks`, `ff`) is taken from the saved
+  model; the same options on the command line are ignored.
+- The target scaling (`y_mu`, `y_sd`) is kept from the saved model too, not
+  re-derived from the new `depth`: the weights were learnt on that scale.
+- The move set in `meta.rds` must match the cube's, or the run stops.
+- `depth`, `lr`, `sched`, `warmup`, `no_cancel` and the rest are the new run's
+  own.
+- The output directory gets an `_init` suffix and `meta.rds` records the path
+  of the model it started from.
+
+`init=` starts a new run with its own schedule. To carry on a run that was cut
+short, save checkpoints with `ckpt=N` (the model and `meta.rds` every N steps,
+with the step reached and the random state) and restart it with
+`resume=<run directory>`:
+
+```
+Rscript inst/examples/train_cube3_q_online.R steps=20000 ckpt=1000
+Rscript inst/examples/train_cube3_q_online.R resume=/mnt/Data2/DS_projects/333/<run>
+```
+
+The schedule, data and architecture all come from the run's `meta.rds`; only
+`backend`, `report` and `ckpt` may be given again. The learning rate picks up
+the same curve at the next step, and the training batches are the ones the
+uninterrupted run would have drawn. Adam's moments are not saved, so the first
+steps after a resume are Adam's first: the result is close to an uninterrupted
+run, not identical to it.
+
 ## Examples
 
 Scripts in `inst/examples/`, runnable with `Rscript inst/examples/<name>.R`.

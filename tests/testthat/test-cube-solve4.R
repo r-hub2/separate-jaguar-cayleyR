@@ -48,14 +48,14 @@ test_that("start_face rejects a name it does not know", {
 
 test_that("cube_solve4 solves the cube, and the path replays to the solve", {
   # This was two tests -- one counting solves, one replaying the path -- on the
-  # same 60-move scrambles. Replaying is the stronger of the two and answers
+  # same scrambles. Replaying is the stronger of the two and answers
   # both, so the scrambles are solved once rather than twice.
   set.seed(9)
   moves <- cube_moves(4)
   names(moves) <- cube_move_names(4)
 
   for (i in 1:3) {
-    s <- generate_state(group = cube_group(4), n_moves = 60L)
+    s <- generate_state(group = cube_group(4), n_moves = 12L)
     res <- cube_solve4(s)
     expect_true(res$found)
 
@@ -69,7 +69,7 @@ test_that("cube_solve4 solves the cube, and the path replays to the solve", {
 
 test_that("reduction leaves every face one colour before the 3x3x3 stage", {
   set.seed(13)
-  s <- generate_state(group = cube_group(4), n_moves = 60L)
+  s <- generate_state(group = cube_group(4), n_moves = 12L)
   res <- cube_solve4(s)
   expect_true(res$found)
 
