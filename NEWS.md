@@ -50,10 +50,7 @@
   it. Passing `n = 54` alone used to give a permutation of 54 stickers that no
   cube can reach.
 
-* `cube3_apply_seq()`, `cube3_compose()`, `cube3_order()` and
-  `cube3_inverse_seq()` are **removed** — `group_apply()`, `group_compose()`,
-  `group_order()` and `group_inverse_seq()` already did the same. The remaining
-  `cube3_*` functions now compute in C++.
+* The `cube3_*` functions are replaced by the general `cube_group(3)` and `group_*()`.
 
 
 # cayleyR 0.2.7
